@@ -1,16 +1,30 @@
 using UnityEngine;
 
+[RequireComponent(typeof(RectTransform))]
 public class RectDisplay : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private RectTransform rectTransform;
+
+    private void OnDrawGizmosSelected()
     {
+        if (!Input.GetKey(KeyCode.Space))
+            return;
 
-    }
+        if (rectTransform == null)
+        {
+            rectTransform = GetComponent<RectTransform>();
+        }
 
-    // Update is called once per frame
-    void Update()
-    {
+        if (rectTransform != null)
+        {
+            Vector3[] corners = new Vector3[4];
+            rectTransform.GetWorldCorners(corners);
 
+            Gizmos.color = Color.green;
+            for (int i = 0; i < corners.Length; i++)
+            {
+                Gizmos.DrawLine(corners[i], corners[(i + 1) % corners.Length]);
+            }
+        }
     }
 }
