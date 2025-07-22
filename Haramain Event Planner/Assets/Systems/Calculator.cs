@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public enum Frequency
@@ -18,64 +17,26 @@ public enum ExpenseCategory
     Other
 }
 
-[System.Serializable]
-public class Expense
+public static class Calculator
 {
-    public string name;
-    public ExpenseCategory category;
-    public float cost;
-    public Frequency frequency;
-    public int customFrequency = 0;
-
-    [Header("Total")]
-    public float total;
-}
-
-[System.Serializable]
-public class Income
-{
-    public string name;
-    public float cost;
-    public Frequency frequency;
-    public int customFrequency = 0;
-
-    [Header("Total")]
-    public float total;
-}
-
-public class Calculator : MonoBehaviour
-{
-    public int eventDuration;
-
-    [Header("Expenses")]
-    public List<Expense> expenses = new List<Expense>();
-
-    [Header("Income")]
-    public List<Income> incomes = new List<Income>();
-
-    [Header("Totals")]
-    public float totalExpenses;
-    public float totalIncome;
-    public float totalProfit;
-
-    private void Update()
+    public static void UpdateEventValues(Event p_event)
     {
         // Get all the totals for each expense and income
-        HandleExpenses();
-        HandleIncomes();
+        HandleExpenses(p_event.expenses, p_event);
+        HandleIncomes(p_event.incomes, p_event);
 
-        totalExpenses = GetTotalExpense();
-        totalIncome = GetTotalIncome();
+        p_event.totalExpenses = GetTotalExpense(p_event.expenses);
+        p_event.totalIncome = GetTotalIncome(p_event.incomes);
 
         // Get balance
-        totalProfit = totalIncome - totalExpenses;
+        p_event.balance = p_event.totalIncome - p_event.totalExpenses;
     }
 
-    private void HandleExpenses()
+    private static void HandleExpenses(List<Expense> expenses, Event p_event)
     {
         foreach (var expense in expenses)
         {
-            int frequency = GetFrequency(expense.frequency);
+            int frequency = GetFrequency(expense.frequency, p_event);
             frequency = frequency == -1 ? expense.customFrequency : frequency;
 
             float total = expense.cost * frequency;
@@ -83,11 +44,11 @@ public class Calculator : MonoBehaviour
         }
     }
 
-    private void HandleIncomes()
+    private static void HandleIncomes(List<Income> incomes, Event p_event)
     {
         foreach (var income in incomes)
         {
-            int frequency = GetFrequency(income.frequency);
+            int frequency = GetFrequency(income.frequency, p_event);
             frequency = frequency == -1 ? income.customFrequency : frequency;
 
             float total = income.cost * frequency;
@@ -95,7 +56,7 @@ public class Calculator : MonoBehaviour
         }
     }
 
-    private float GetTotalExpense()
+    private static float GetTotalExpense(List<Expense> expenses)
     {
         float e = 0f;
 
@@ -107,7 +68,7 @@ public class Calculator : MonoBehaviour
         return e;
     }
 
-    private float GetTotalIncome()
+    private static float GetTotalIncome(List<Income> incomes)
     {
         float i = 0f;
 
@@ -119,7 +80,7 @@ public class Calculator : MonoBehaviour
         return i;
     }
 
-    public int GetFrequency(Frequency frequency)
+    private static int GetFrequency(Frequency frequency, Event p_event)
     {
         int i = 0;
 
@@ -127,7 +88,7 @@ public class Calculator : MonoBehaviour
         {
             case Frequency.Daily:
 
-                i = eventDuration;
+                i = p_event.eventDuration;
 
             break;
 
@@ -139,7 +100,7 @@ public class Calculator : MonoBehaviour
 
             case Frequency.Custom:
 
-                i = -1;
+                i = -2;
 
             break;
         }
