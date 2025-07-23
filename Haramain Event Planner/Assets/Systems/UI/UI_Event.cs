@@ -7,6 +7,8 @@ public class UI_Event : MonoBehaviour
     public Event allocatedEvent;
 
     [Header("Event Page")]
+    public TMP_InputField eventNameInput;
+
     [Header("Event Duration")]
     public TMP_InputField eventDurationInput;
     public Button increaseButton;
@@ -24,12 +26,15 @@ public class UI_Event : MonoBehaviour
 
     private void Start()
     {
-        UpdateInputField();
+        // Event Name Setup
+        eventNameInput.onValueChanged.AddListener(OnEventNameChanged);
 
+        // Event Duration Setup
+        UpdateDurationInputField();
         increaseButton.onClick.AddListener(IncreaseEventDuration);
         decreaseButton.onClick.AddListener(DecreaseEventDuration);
+        eventDurationInput.onValueChanged.AddListener(OnDurationInputFieldChanged);
 
-        eventDurationInput.onValueChanged.AddListener(OnInputFieldChanged);
         UpdateTotals(allocatedEvent);
     }
 
@@ -38,9 +43,24 @@ public class UI_Event : MonoBehaviour
         UpdateTotals(allocatedEvent);
     }
 
+    #region Event Name
+
+    private void UpdateNameInputField()
+    {
+        eventNameInput.text = allocatedEvent.eventName;
+    }
+
+    private void OnEventNameChanged(string newName)
+    {
+        allocatedEvent.eventName = newName;
+        UpdateNameInputField();
+    }
+
+    #endregion
+
     #region Event Duration
 
-    private void UpdateInputField()
+    private void UpdateDurationInputField()
     {
         eventDurationInput.text = allocatedEvent.eventDuration.ToString();
     }
@@ -48,30 +68,32 @@ public class UI_Event : MonoBehaviour
     private void IncreaseEventDuration()
     {
         allocatedEvent.eventDuration++;
-        UpdateInputField();
+        UpdateDurationInputField();
     }
 
     private void DecreaseEventDuration()
     {
         allocatedEvent.eventDuration = Mathf.Max(0, allocatedEvent.eventDuration - 1);
-        UpdateInputField();
+        UpdateDurationInputField();
     }
 
-    private void OnInputFieldChanged(string input)
+    private void OnDurationInputFieldChanged(string input)
     {
         if (int.TryParse(input, out int newValue))
         {
             allocatedEvent.eventDuration = Mathf.Max(0, newValue);
         }
-        UpdateInputField();
+        UpdateDurationInputField();
     }
 
     #endregion
 
+    #region Totals
     public void UpdateTotals(Event currentEvent)
     {
         totalIncomeText.text = "£" + currentEvent.totalIncome.ToString("F2");
         totalExpensesText.text = "£" + currentEvent.totalExpenses.ToString("F2");
         balanceText.text = "£" + currentEvent.balance.ToString("F2");
     }
+    #endregion
 }

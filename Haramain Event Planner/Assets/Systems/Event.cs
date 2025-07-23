@@ -4,6 +4,7 @@ using UnityEngine;
 [System.Serializable]
 public class Event
 {
+    public string eventName = new string("New Event");
     public int eventDuration;
 
     [Header("Expenses")]
