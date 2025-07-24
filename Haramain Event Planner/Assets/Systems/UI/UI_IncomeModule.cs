@@ -1,16 +1,31 @@
+using TMPro;
 using UnityEngine;
 
 public class UI_IncomeModule : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public TextMeshProUGUI incomeNameText;
+    public TextMeshProUGUI incomeCostText;
+    public TextMeshProUGUI incomeTotalCost;
+
+    private Income allocatedIncome;
+
+    public void Initialize(Income income)
     {
-        
+        allocatedIncome = income;
+        UpdateElements();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void UpdateElements()
     {
-        
+        if (allocatedIncome == null)
+            return;
+
+        var name = allocatedIncome.name;
+        var cost = allocatedIncome.cost;
+        var total = allocatedIncome.total;
+
+        incomeNameText.text = name;
+        incomeCostText.text = "�" + cost.ToString("F2");
+        incomeTotalCost.text = "�" + total.ToString("F2");
     }
 }

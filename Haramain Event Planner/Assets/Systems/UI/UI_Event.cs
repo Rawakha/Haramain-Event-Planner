@@ -1,12 +1,12 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class UI_Event : MonoBehaviour
 {
-    public Event allocatedEvent;
-
     [Header("Event Page")]
+    public Event allocatedEvent;
     public TMP_InputField eventNameInput;
 
     [Header("Event Duration")]
@@ -28,6 +28,8 @@ public class UI_Event : MonoBehaviour
 
     [Header("Display Incomes/Expenses")]
     [Header("Tabs")]
+    public Transform incomeTab;
+    public Transform expenseTab;
     public Button incomeTabButton;
     public Button expenseTabButton;
     [Header("Tab Colors")]
@@ -36,6 +38,11 @@ public class UI_Event : MonoBehaviour
     [Header("Text Colors")]
     public Color selectedTextColor = Color.white;
     public Color unselectedTextColor = Color.blue;
+
+    [Header("Income/Expense Modules")]
+    public UI_IncomeModule incomeModuleTemplate;
+
+    private List<UI_IncomeModule> incomeModules = new List<UI_IncomeModule>();
 
     private void Awake()
     {
@@ -59,18 +66,21 @@ public class UI_Event : MonoBehaviour
         // Tab Setup
         SetupTabButton();
 
-        // Update Totals
+        // Update Initial UI
         UpdateTotals(allocatedEvent);
+        UpdateIncomeModules(allocatedEvent.incomes);
     }
 
     private void OnEnable()
     {
         allocatedEvent.OnEventUpdated += OnEventUpdated;
+        allocatedEvent.OnIncomesUpdated += UpdateIncomeModules;
     }
 
     private void OnDisable()
     {
         allocatedEvent.OnEventUpdated -= OnEventUpdated;
+        allocatedEvent.OnIncomesUpdated += UpdateIncomeModules;
     }
 
     private void Update()
@@ -133,9 +143,9 @@ public class UI_Event : MonoBehaviour
     #region Totals
     public void UpdateTotals(Event currentEvent)
     {
-        totalIncomeText.text = "£" + currentEvent.totalIncome.ToString("F2");
-        totalExpensesText.text = "£" + currentEvent.totalExpenses.ToString("F2");
-        balanceText.text = "£" + currentEvent.balance.ToString("F2");
+        totalIncomeText.text = "ï¿½" + currentEvent.totalIncome.ToString("F2");
+        totalExpensesText.text = "ï¿½" + currentEvent.totalExpenses.ToString("F2");
+        balanceText.text = "ï¿½" + currentEvent.balance.ToString("F2");
     }
     #endregion
 
@@ -178,6 +188,7 @@ public class UI_Event : MonoBehaviour
         HandleButtonVisual(incomeTabButton, true);
 
         // Activate Tab Content
+        incomeTab.gameObject.SetActive(true);
     }
 
     private void CloseIncomeTab()
@@ -185,6 +196,7 @@ public class UI_Event : MonoBehaviour
         HandleButtonVisual(incomeTabButton, false);
 
         // Deactivate Tab Content
+        incomeTab.gameObject.SetActive(false);
     }
 
     private void OpenExpenseTab()
@@ -193,6 +205,7 @@ public class UI_Event : MonoBehaviour
         HandleButtonVisual(expenseTabButton, true);
 
         // Activate Tab Content
+        expenseTab.gameObject.SetActive(true);
     }
 
     private void CloseExpenseTab()
@@ -200,6 +213,7 @@ public class UI_Event : MonoBehaviour
         HandleButtonVisual(expenseTabButton, false);
 
         // Deactivate Tab Content
+        expenseTab.gameObject.SetActive(false);
     }
     #endregion
 
@@ -228,6 +242,30 @@ public class UI_Event : MonoBehaviour
 
         textModule.text = $"Expenses ({expenseCount})";
     }
+    #endregion
+
+    #region Creating Income/Expense Modules 
+
+    private void UpdateIncomeModules(List<Income> incomes)
+    {
+        ClearIncomeModules();
+
+        foreach (var income in incomes)
+        {
+            UI_IncomeModule incomeModule = Instantiate(incomeModuleTemplate, incomeTab, false);
+            incomeModule.Initialize(income);
+            incomeModules.Add(incomeModule);
+        }
+    }
+
+    private void ClearIncomeModules()
+    {
+        foreach (var incomeModule in incomeModules)
+        {
+            Destroy(incomeModule.gameObject);
+        }
+    }
+
     #endregion
 
     #endregion
