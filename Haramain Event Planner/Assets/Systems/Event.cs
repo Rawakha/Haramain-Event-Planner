@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,4 +18,26 @@ public class Event
     public float totalExpenses;
     public float totalIncome;
     public float balance;
+
+    public event Action OnEventUpdated;
+    public event Action<List<Income>> OnIncomesUpdated;
+    public event Action<List<Expense>> OnExpensesUpdated;
+
+    public void AddIncome(Income income)
+    {
+        incomes.Add(income);
+        Calculator.UpdateEventValues(this);
+
+        OnEventUpdated?.Invoke();
+        OnIncomesUpdated?.Invoke(incomes);
+    }
+
+    public void AddExpense(Expense expense)
+    {
+        expenses.Add(expense);
+        Calculator.UpdateEventValues(this);
+
+        OnEventUpdated?.Invoke();
+        OnExpensesUpdated?.Invoke(expenses);
+    }
 }
