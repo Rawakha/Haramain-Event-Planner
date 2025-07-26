@@ -19,11 +19,4 @@ public class AppManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-
-    // For Testing purposes
-    // Call all calculations in update
-    private void Update()
-    {
-        Calculator.UpdateEventValues(currentEvent);
-    }
 }

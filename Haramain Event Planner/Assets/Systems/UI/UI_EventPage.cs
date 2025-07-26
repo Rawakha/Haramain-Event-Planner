@@ -2,8 +2,9 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using DG.Tweening;
 
-public class UI_Event : MonoBehaviour
+public class UI_EventPage : MonoBehaviour
 {
     [Header("Event Page")]
     public Event allocatedEvent;
@@ -15,9 +16,9 @@ public class UI_Event : MonoBehaviour
     public Button decreaseButton;
 
     [Header("Totals")]
-    public TextMeshProUGUI totalIncomeText;
-    public TextMeshProUGUI totalExpensesText;
-    public TextMeshProUGUI balanceText;
+    public UI_TextAnimator totalIncomeText;
+    public UI_TextAnimator totalExpensesText;
+    public UI_TextAnimator balanceText;
 
     [Header("Add Income/Expense Buttons")]
     public Button addIncomeButton;
@@ -28,8 +29,8 @@ public class UI_Event : MonoBehaviour
 
     [Header("Display Incomes/Expenses")]
     [Header("Tabs")]
-    public Transform incomeTab;
-    public Transform expenseTab;
+    public GameObject incomeTab;
+    public GameObject expenseTab;
     public Button incomeTabButton;
     public Button expenseTabButton;
     [Header("Tab Colors")]
@@ -41,8 +42,10 @@ public class UI_Event : MonoBehaviour
 
     [Header("Income/Expense Modules")]
     public UI_IncomeModule incomeModuleTemplate;
+    public UI_ExpenseModule expenseModuleTemplate;
 
     private List<UI_IncomeModule> incomeModules = new List<UI_IncomeModule>();
+    private List<UI_ExpenseModule> expenseModules = new List<UI_ExpenseModule>();
 
     private void Awake()
     {
@@ -75,24 +78,21 @@ public class UI_Event : MonoBehaviour
     {
         allocatedEvent.OnEventUpdated += OnEventUpdated;
         allocatedEvent.OnIncomesUpdated += UpdateIncomeModules;
+        allocatedEvent.OnExpensesUpdated += UpdateExpenseModules;
     }
 
     private void OnDisable()
     {
         allocatedEvent.OnEventUpdated -= OnEventUpdated;
-        allocatedEvent.OnIncomesUpdated += UpdateIncomeModules;
-    }
-
-    private void Update()
-    {
-        UpdateTotals(allocatedEvent);
+        allocatedEvent.OnIncomesUpdated -= UpdateIncomeModules;
+        allocatedEvent.OnExpensesUpdated -= UpdateExpenseModules;
     }
 
     private void OnEventUpdated()
     {
-        // Tab Button Text Updates
         UpdateIncomeButtonText();
         UpdateExpenseButtonText();
+        UpdateTotals(allocatedEvent);
     }
 
     #region Event Name
@@ -119,13 +119,13 @@ public class UI_Event : MonoBehaviour
 
     private void IncreaseEventDuration()
     {
-        allocatedEvent.eventDuration++;
+        allocatedEvent.EventDuration++;
         UpdateDurationInputField();
     }
 
     private void DecreaseEventDuration()
     {
-        allocatedEvent.eventDuration = Mathf.Max(0, allocatedEvent.eventDuration - 1);
+        allocatedEvent.EventDuration = Mathf.Max(0, allocatedEvent.eventDuration - 1);
         UpdateDurationInputField();
     }
 
@@ -133,7 +133,7 @@ public class UI_Event : MonoBehaviour
     {
         if (int.TryParse(input, out int newValue))
         {
-            allocatedEvent.eventDuration = Mathf.Max(0, newValue);
+            allocatedEvent.EventDuration = Mathf.Max(0, newValue);
         }
         UpdateDurationInputField();
     }
@@ -143,9 +143,9 @@ public class UI_Event : MonoBehaviour
     #region Totals
     public void UpdateTotals(Event currentEvent)
     {
-        totalIncomeText.text = "�" + currentEvent.totalIncome.ToString("F2");
-        totalExpensesText.text = "�" + currentEvent.totalExpenses.ToString("F2");
-        balanceText.text = "�" + currentEvent.balance.ToString("F2");
+        totalIncomeText.UpdateNumericalText(currentEvent.totalIncome);
+        totalExpensesText.UpdateNumericalText(currentEvent.totalExpenses);
+        balanceText.UpdateNumericalText(currentEvent.balance);
     }
     #endregion
 
@@ -166,7 +166,9 @@ public class UI_Event : MonoBehaviour
 
     private void OpenExpenseCreator()
     {
-        Instantiate(expenseCreatorPrefab);
+        GameObject expenseCreator = Instantiate(expenseCreatorPrefab, transform, false);
+        UI_ExpenseCreator expenseCreatorScript = expenseCreator.GetComponent<UI_ExpenseCreator>();
+        expenseCreatorScript.Initialize(allocatedEvent);
     }
 
     #endregion
@@ -223,8 +225,14 @@ public class UI_Event : MonoBehaviour
         var image = button.GetComponent<Image>();
         var text = button.GetComponentInChildren<TextMeshProUGUI>();
 
-        image.color = isOpen ? selectedTabColor : unselectedTabColor;
-        text.color = isOpen ? selectedTextColor : unselectedTextColor;
+        var targetImageColor = isOpen ? selectedTabColor : unselectedTabColor;
+        var targetTextColor = isOpen ? selectedTextColor : unselectedTextColor;
+
+        image.DOKill();
+        text.DOKill();
+
+        image.DOColor(targetImageColor, 0.25f).SetEase(Ease.InOutSine);
+        text.DOColor(targetTextColor, 0.25f).SetEase(Ease.InOutSine);
     }
 
     private void UpdateIncomeButtonText()
@@ -252,7 +260,7 @@ public class UI_Event : MonoBehaviour
 
         foreach (var income in incomes)
         {
-            UI_IncomeModule incomeModule = Instantiate(incomeModuleTemplate, incomeTab, false);
+            UI_IncomeModule incomeModule = Instantiate(incomeModuleTemplate, incomeTab.transform, false);
             incomeModule.Initialize(income);
             incomeModules.Add(incomeModule);
         }
@@ -264,6 +272,28 @@ public class UI_Event : MonoBehaviour
         {
             Destroy(incomeModule.gameObject);
         }
+        incomeModules.Clear();
+    }
+
+    private void UpdateExpenseModules(List<Expense> expenses)
+    {
+        ClearExpenseModules();
+
+        foreach (var expense in expenses)
+        {
+            UI_ExpenseModule expenseModule = Instantiate(expenseModuleTemplate, expenseTab.transform, false);
+            expenseModule.Initialize(expense);
+            expenseModules.Add(expenseModule);
+        }
+    }
+
+    private void ClearExpenseModules()
+    {
+        foreach (var expenseModule in expenseModules)
+        {
+            Destroy(expenseModule.gameObject);
+        }
+        expenseModules.Clear();
     }
 
     #endregion

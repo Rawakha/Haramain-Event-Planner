@@ -23,21 +23,73 @@ public class Event
     public event Action<List<Income>> OnIncomesUpdated;
     public event Action<List<Expense>> OnExpensesUpdated;
 
+    // Setters
+    public int EventDuration
+    {
+        get => eventDuration;
+        set
+        {
+            eventDuration = value;
+            EventUpdated();
+        }
+    }
+
+    private void EventUpdated()
+    {
+        Calculator.UpdateEventValues(this);
+        OnEventUpdated?.Invoke();
+    }
+
     public void AddIncome(Income income)
     {
         incomes.Add(income);
-        Calculator.UpdateEventValues(this);
+        income.OnIncomeDeleted += RemoveIncome;
+        income.OnIncomeEdited += IncomeEdited;
+        EventUpdated();
+        OnIncomesUpdated?.Invoke(incomes);
+    }
 
-        OnEventUpdated?.Invoke();
+    private void RemoveIncome(Income income)
+    {
+        var index = incomes.IndexOf(income);
+        if (index >= 0)
+        {
+            incomes.RemoveAt(index);
+            EventUpdated();
+            OnIncomesUpdated?.Invoke(incomes);
+        }
+    }
+
+    private void IncomeEdited(Income income)
+    {
+        EventUpdated();
         OnIncomesUpdated?.Invoke(incomes);
     }
 
     public void AddExpense(Expense expense)
     {
         expenses.Add(expense);
-        Calculator.UpdateEventValues(this);
+        expense.OnExpenseDeleted += RemoveExpense;
+        expense.OnExpenseEdited += ExpenseEdited;
+        EventUpdated();
+        OnExpensesUpdated?.Invoke(expenses);
+    }
 
-        OnEventUpdated?.Invoke();
+    public void RemoveExpense(Expense expense)
+    {
+        var index = expenses.IndexOf(expense);
+        if (index >= 0)
+        {
+            expenses.RemoveAt(index);
+            Calculator.UpdateEventValues(this);
+            OnEventUpdated?.Invoke();
+            OnExpensesUpdated?.Invoke(expenses);
+        }
+    }
+
+    public void ExpenseEdited(Expense expense)
+    {
+        EventUpdated();
         OnExpensesUpdated?.Invoke(expenses);
     }
 }
